@@ -1,642 +1,219 @@
-# Employee-Burn-out-Rate-Prediction
-
-# Employee Burnout Rate Prediction Using People Analytics and HR Metrics
-
-## Project Overview
-
-Employee burnout is a growing concern in modern workplaces, affecting employee well-being, productivity, engagement, and organizational performance. This project uses Machine Learning and People Analytics techniques to predict employee burnout rates using HR-related metrics and workplace factors.
-
-The objective of this project is to develop a regression model that accurately predicts employee burnout and identifies the key factors contributing to burnout risk. The insights generated can help organizations proactively address employee well-being concerns, improve workforce productivity, and reduce employee turnover.
-
----
-
-# Tools and Technologies Used
-
-- **Python** – Programming Language
-- **Pandas** – Data Manipulation and Analysis
-- **NumPy** – Numerical Computing
-- **Matplotlib** – Data Visualization
-- **Seaborn** – Statistical Data Visualization
-- **Scikit-Learn** – Machine Learning and Preprocessing
-- **XGBoost** – Gradient Boosting Regression Model
-- **Jupyter Notebook** – Development Environment
-
----
-
-# Problem Statement
-
-The goal of this project is to build a machine learning regression model capable of predicting employee burnout rates based on workforce and HR-related metrics.
-
-Organizations can use these predictions to:
-
-- Identify employees at risk of burnout.
-- Improve workforce management strategies.
-- Balance employee workloads effectively.
-- Support employee mental health initiatives.
-- Improve retention and productivity.
-- Enable proactive HR decision-making.
-
----
-
-# Dataset Description
-
-The project uses two datasets:
-
-## Training Dataset
-
-The training dataset contains both predictor variables and the target variable.
-
-### Features
-
-| Feature | Description |
-|----------|-------------|
-| Employee ID | Unique employee identifier |
-| Date of Joining | Date employee joined the organization |
-| Gender | Male or Female |
-| Company Type | Product or Service company |
-| WFH Setup Available | Availability of Work From Home setup |
-| Designation | Employee designation level |
-| Resource Allocation | Workload allocated to employee |
-| Mental Fatigue Score | Employee fatigue score |
-| Burn Rate | Target variable |
-
----
-
-## Test Dataset
-
-The test dataset contains all predictor variables but does not contain the Burn Rate column.
-
-The trained model is used to predict burnout rates for these employees.
-
----
-
-# Project Workflow
-
-The project followed the following workflow:
-
-1. Data Loading
-2. Data Understanding
-3. Data Cleaning
-4. Feature Engineering
-5. Exploratory Data Analysis (EDA)
-6. Data Preprocessing
-7. Model Building
-8. Model Evaluation
-9. Feature Importance Analysis
-10. Test Set Prediction
-11. Business Recommendations
-
----
-
-# Data Loading
-
-The datasets were loaded using Pandas.
-
-```python
-import pandas as pd
-
-train = pd.read_csv("train.csv")
-test = pd.read_csv("test.csv")
-```
-
-Dataset information was explored using:
-
-```python
-train.shape
-
-train.info()
-
-train.describe()
-
-train.head()
-```
-
----
-
-# Data Understanding
-
-The initial analysis focused on:
-
-- Dataset dimensions
-- Data types
-- Missing values
-- Numerical feature distributions
-- Target variable distribution
-- Overall dataset quality
-
-Missing values were identified using:
-
-```python
-train.isnull().sum()
-```
-
----
-
-# Data Cleaning
-
-## Handling Missing Values
-
-### Burn Rate
-
-Since Burn Rate is the target variable, rows with missing Burn Rate values were removed.
-
-```python
-train = train.dropna(subset=['Burn Rate'])
-```
-
-### Mental Fatigue Score
-
-Missing values were replaced using the median value.
-
-```python
-train['Mental Fatigue Score'].fillna(
-    train['Mental Fatigue Score'].median(),
-    inplace=True
-)
-
-test['Mental Fatigue Score'].fillna(
-    train['Mental Fatigue Score'].median(),
-    inplace=True
-)
-```
-
-### Resource Allocation
-
-Missing values were replaced using the median value.
-
-```python
-train['Resource Allocation'].fillna(
-    train['Resource Allocation'].median(),
-    inplace=True
-)
-
-test['Resource Allocation'].fillna(
-    train['Resource Allocation'].median(),
-    inplace=True
-)
-```
-
-Median imputation was chosen because it reduces the impact of outliers while preserving the central tendency of the dataset.
-
----
-
-## Removing Employee ID
-
-Employee ID was removed because it does not contribute any predictive information.
-
-```python
-train.drop('Employee ID', axis=1, inplace=True)
-
-test.drop('Employee ID', axis=1, inplace=True)
-```
-
----
-
-# Feature Engineering
-
-## Date Conversion
-
-The Date of Joining feature was converted to datetime format.
-
-```python
-train['Date of Joining'] = pd.to_datetime(train['Date of Joining'])
-
-test['Date of Joining'] = pd.to_datetime(test['Date of Joining'])
-```
-
----
-
-## Date-based Features
-
-New features were extracted from Date of Joining.
-
-### Joining Month
-
-```python
-Joining_Month
-```
-
-### Joining Day
-
-```python
-Joining_Day
-```
-
-### Joining Quarter
-
-```python
-Joining_Quarter
-```
-
-Implementation:
-
-```python
-for df in [train, test]:
-
-    df['Joining_Month'] = df['Date of Joining'].dt.month
-    df['Joining_Day'] = df['Date of Joining'].dt.day
-    df['Joining_Quarter'] = df['Date of Joining'].dt.quarter
-
-    df.drop('Date of Joining', axis=1, inplace=True)
-```
-
----
-
-# Exploratory Data Analysis (EDA)
-
-EDA was performed to uncover patterns, relationships, and trends within the dataset.
-
----
-
-## Burn Rate Distribution
-
-Purpose:
-
-- Analyze burnout distribution
-- Detect skewness
-- Detect outliers
-
-```python
-sns.histplot(train['Burn Rate'], kde=True)
-plt.title('Burn Rate Distribution')
-plt.show()
-```
-
----
-
-## Mental Fatigue Score vs Burn Rate
-
-Purpose:
-
-- Examine the relationship between fatigue and burnout.
-
-```python
-sns.scatterplot(
-    data=train,
-    x='Mental Fatigue Score',
-    y='Burn Rate'
-)
-```
-
-### Insight
-
-Employees with higher mental fatigue scores generally showed significantly higher burnout rates.
-
----
-
-## Resource Allocation vs Burn Rate
-
-Purpose:
-
-- Understand how workload affects burnout.
-
-```python
-sns.boxplot(
-    x='Resource Allocation',
-    y='Burn Rate',
-    data=train
-)
-```
-
-### Insight
-
-Burnout levels increase as resource allocation increases.
-
----
-
-## Designation vs Burn Rate
-
-Purpose:
-
-- Determine whether burnout varies across employee seniority levels.
-
-```python
-sns.boxplot(
-    x='Designation',
-    y='Burn Rate',
-    data=train
-)
-```
-
-### Insight
-
-Employees in higher designation levels generally experience greater burnout.
-
----
-
-## Gender vs Burn Rate
-
-Purpose:
-
-- Compare burnout rates across genders.
-
-```python
-sns.boxplot(
-    x='Gender',
-    y='Burn Rate',
-    data=train
-)
-```
-
-### Insight
-
-Differences were observed but were less significant than workload and fatigue-related factors.
-
----
-
-## Company Type vs Burn Rate
-
-Purpose:
-
-- Compare burnout patterns in Product and Service organizations.
-
-```python
-sns.boxplot(
-    x='Company Type',
-    y='Burn Rate',
-    data=train
-)
-```
-
-### Insight
-
-Both company types exhibited similar burnout trends.
-
----
-
-## WFH Setup Availability vs Burn Rate
-
-Purpose:
-
-- Assess the impact of remote work support on burnout.
-
-```python
-sns.boxplot(
-    x='WFH Setup Available',
-    y='Burn Rate',
-    data=train
-)
-```
-
-### Insight
-
-Employees with WFH support generally showed slightly lower burnout levels.
-
----
-
-## Correlation Analysis
-
-A heatmap was created to identify relationships among numerical variables.
-
-```python
-numeric_cols = [
-    'Designation',
-    'Resource Allocation',
-    'Mental Fatigue Score',
-    'Joining_Month',
-    'Joining_Day',
-    'Joining_Quarter',
-    'Burn Rate'
-]
-
-corr = train[numeric_cols].corr()
-
-sns.heatmap(
-    corr,
-    annot=True,
-    cmap='coolwarm'
-)
-```
-
----
-
-# Data Preprocessing
-
-## Numerical Features
-
-```python
-Designation
-Resource Allocation
-Mental Fatigue Score
-Joining_Month
-Joining_Day
-Joining_Quarter
-```
-
-Missing values were handled using:
-
-```python
-SimpleImputer(strategy='median')
-```
-
----
-
-## Categorical Features
-
-```python
-Gender
-Company Type
-WFH Setup Available
-```
-
-Categorical variables were encoded using:
-
-```python
-OneHotEncoder()
-```
-
----
-
-# Train-Test Split
-
-The data was divided into training and validation sets.
-
-```python
-from sklearn.model_selection import train_test_split
-
-X_train, X_val, y_train, y_val = train_test_split(
-    X,
-    y,
-    test_size=0.2,
-    random_state=42
-)
-```
-
----
-
-# Model Development
-
-## Linear Regression
-
-A Linear Regression model was developed as the baseline model.
-
-### Benefits
-
-- Easy to interpret
-- Fast training time
-- Useful benchmark model
-
----
-
-## Random Forest Regressor
-
-A Random Forest model was developed to capture complex and non-linear relationships.
-
-### Benefits
-
-- Handles feature interactions
-- Resistant to overfitting
-- Robust performance on structured datasets
-
----
-
-## XGBoost Regressor
-
-XGBoost was selected as the final model because of its superior predictive performance.
-
-### Model Parameters
-
-```python
-XGBRegressor(
-    n_estimators=500,
-    learning_rate=0.05,
-    max_depth=6,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    random_state=42
-)
-```
-
-### Benefits
-
-- High predictive accuracy
-- Strong performance on tabular datasets
-- Handles non-linear relationships effectively
-
----
-
-# Model Evaluation
-
-The following regression metrics were used.
-
-## Mean Absolute Error (MAE)
-
-Measures average prediction error.
-
-## Root Mean Squared Error (RMSE)
-
-Measures overall model accuracy.
-
-## R-Squared (R²)
-
-Measures explained variance.
-
-```python
-MAE
-
-RMSE
-
-R²
-```
-
----
-
-# Feature Importance
-
-The final model's feature importance analysis identified the key drivers of employee burnout.
-
-## Most Important Features
-
-1. Mental Fatigue Score
-2. Resource Allocation
-3. Designation
-4. WFH Setup Available
-5. Company Type
-6. Gender
-
----
-
-# Key Findings and Insights
-
-- Mental Fatigue Score was the strongest predictor of employee burnout.
-- Burnout rates increased consistently as mental fatigue scores increased.
-- Employees with heavier workloads experienced significantly higher burnout levels.
-- Resource Allocation demonstrated a strong positive relationship with burnout.
-- Employees in higher designation levels showed higher burnout rates due to increased responsibilities.
-- Employees with Work From Home support generally reported slightly lower burnout levels.
-- Burnout levels increased substantially once Mental Fatigue Scores exceeded approximately 7.
-- Organizational and workload-related factors had a stronger influence on burnout than demographic characteristics.
-- Product and Service organizations showed similar burnout trends.
-- Combining fatigue and workload indicators provided strong predictive power for burnout estimation.
-
----
-
-# Business Recommendations
-
-Based on the analysis, organizations should:
-
-- Regularly monitor employee mental fatigue levels.
-- Implement employee wellness and mental health support programs.
-- Balance workloads more effectively across teams.
-- Develop burnout risk monitoring systems using predictive analytics.
-- Introduce flexible work arrangements where possible.
-- Monitor high-designation employees who may experience additional pressure.
-- Use machine learning models as early-warning systems for identifying at-risk employees.
-- Conduct periodic employee well-being assessments.
-
----
-
-# Limitations
-
-- Limited number of HR variables available.
-- No information on employee age, salary, department, or work experience.
-- External and personal factors influencing burnout were not captured.
-- Missing values may introduce uncertainty into predictions.
-- Human behavior is complex and cannot be fully explained using available variables.
-- The model's performance depends on the quality of the available data.
-
----
-
-# Future Improvements
-
-- Hyperparameter tuning using GridSearchCV or Optuna.
-- Model ensemble techniques.
-- SHAP explainability analysis.
-- Real-time burnout monitoring dashboards.
-- Streamlit deployment for interactive predictions.
-- Integration of additional HR, behavioral, and employee wellness metrics.
-
----
-
-# Project Structure
-
-```text
-Employee-Burnout-Prediction/
-│
-├── data/
-│   ├── train.csv
-│   └── test.csv
-│
-├── notebooks/
-│   └── burnout_prediction.ipynb
-│
-├── outputs/
-│   ├── submission.csv
-│   └── visualizations/
-│
+# Employee Burnout Rate Prediction 
+
+# Project overview
+This capstone project investigates employee burnout patterns and develops machine-learning models to predict employee burnout rates from employee- and workplace-related features. It also applies Explainable Artificial Intelligence (XAI) techniques to interpret model predictions and explore hypothetical changes associated with lower predicted burnout.
+
+The project follows an end-to-end data science workflow, including data quality assessment, exploratory data analysis, feature engineering, model development, hyperparameter optimization, model evaluation, explainability, and counterfactual analysis.
+Project context: The dataset appears to contain generated or synthetic patterns. Results should therefore be interpreted as findings about the supplied dataset, not as validated estimates of burnout in a real workforce.
+
+# Abstract
+Employee burnout is an important workplace concern because it may be associated with reduced well-being, productivity, engagement, and employee retention. This project applies data analytics and machine-learning techniques to an employee dataset containing approximately 850,000 records and 31 original columns. The target variable, burnout_rate, represents a continuous score ranging from 0 to 1.
+
+The project explores employee and workplace characteristics, engineers features from available data, and evaluates Linear Regression, Random Forest, XGBoost, and a Stacking Regressor. Optuna is used to optimize XGBoost hyperparameters. Model performance is assessed using Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), and the coefficient of determination (R²). SHAP is applied to explain global and individual model predictions, while DiCE is used to generate counterfactual examples for selected high-prediction records.
+
+The notebook reports that tuned XGBoost achieved the strongest results among the evaluated models, with an MAE of 0.0131, RMSE of 0.0195, and R² of 0.9962 on the reported validation split. These figures require confirmation through a clean, reproducible run and an independent test set before being presented as final model performance.
+Problem statement
+Employee burnout is a workplace challenge that can negatively affect employee well-being and may be associated with reduced productivity, engagement, and retention. Burnout is a complex phenomenon that may relate to several factors, including workload, working hours, job satisfaction, stress, career progression, and workplace conditions. Examining these factors individually may not provide a sufficiently comprehensive view of patterns within a large employee dataset.
+
+Although machine learning can help identify patterns across multiple variables and estimate burnout scores, a predictive model must be appropriately developed and evaluated. Its predictions should also be interpretable so that users can understand which features influence the model's outputs. Furthermore, hypothetical recommendations generated by a model should be examined carefully rather than assumed to produce real-world improvements.
+
+This project addresses the problem by analysing employee and workplace data, developing regression models to estimate employee burnout rates, and applying explainability and counterfactual techniques to investigate the features associated with model predictions. The project is intended as a data science capstone demonstration and does not establish causal relationships or provide clinical assessments.
+# Aim and objectives
+## Main objective
+To develop and evaluate a machine-learning model for predicting employee burnout rates using employee- and workplace-related features, and to apply explainable AI techniques to interpret model predictions and explore hypothetical scenarios associated with lower predicted burnout.
+# Specific objectives
+1. To assess and prepare the employee dataset by examining missing values, duplicate records, outliers, data types, and other data-quality issues.
+2. To conduct exploratory data analysis to investigate the distribution of burnout rates and examine patterns between burnout and selected employee and workplace characteristics.
+3. To perform feature engineering and feature selection to construct relevant predictors and reduce the risk of target leakage.
+4. To develop and compare regression models, including Linear Regression, Random Forest, and XGBoost, for predicting employee burnout rates.
+5. To optimize model hyperparameters and evaluate model performance using MAE, RMSE, and R².
+6. To apply SHAP to interpret the contribution of features to model predictions at both global and individual levels.
+7. To apply DiCE counterfactual explanations to explore plausible alternative feature values associated with lower predicted burnout rates.
+Research questions
+1. What patterns and distributions are present in the employee burnout dataset?
+2. Which employee- and workplace-related features are most strongly associated with the burnout rates represented in the dataset?
+3. How do Linear Regression, Random Forest, and XGBoost compare in predicting employee burnout rates?
+4. Does hyperparameter optimization improve the predictive performance of XGBoost?
+5. Which features contribute most to the model's burnout predictions, according to SHAP?
+6. What alternative feature combinations can DiCE identify that are associated with lower predicted burnout scores?
+Project scope
+The project focuses on the analysis and prediction of a continuous employee burnout score using the supplied dataset. It includes data preparation, exploratory analysis, feature engineering, regression modelling, hyperparameter tuning, model evaluation, SHAP-based interpretation, and DiCE counterfactual analysis.
+
+The project does not diagnose burnout, establish the causes of burnout, validate workplace interventions, or make employment decisions. Any potential interventions suggested by counterfactual examples require independent evaluation and human review.
+# Dataset description
+The dataset contains approximately 850,000 records and 31 original columns.
+Attribute	Description
+Number of records	Approximately 850,000
+Original columns	31
+Target variable	burnout_rate
+Target scale	0 to 1
+File format	JSON
+
+
+The notebook renames burnout_risk to burnout_rate when the original column is present. It also creates the following engineered features from list-valued skill fields:
+- tech_skill_count
+- soft_skill_count
+- total_skill_count
+The notebook checks data types, missing values, duplicates, numeric outliers, variance, cardinality, value ranges, and nested list/dictionary fields. The dataset's source and generation process should be documented in the final capstone report if that information is available.
+
+# Methodology
+
+1. Data loading and preparation
+
+The dataset is loaded from a JSON file and inspected for its structure and quality. Data preparation includes checking missing values, duplicate records, data types, outliers, variance, cardinality, and nested fields. Skill-list fields are converted into numeric counts, and selected numeric columns are converted from float64 to float32 to reduce memory usage.
+
+Outliers are retained in the current workflow because they may represent meaningful observations. This decision should be supported by domain understanding and data validation; erroneous or impossible values should be corrected or removed.
+
+2. Exploratory data analysis
+Exploratory data analysis examines the target distribution and the relationships between burnout rate and selected variables. The notebook includes:
+- Burnout-rate distribution and project-defined risk bands
+- Histograms and skewness analysis for numerical variables
+- Frequency distributions for categorical variables
+- Burnout comparisons by stress level, overtime, department, career progression, workload, and company departure status
+- Correlation analysis
+The notebook identifies a very strong association between stress_level and the target and excludes it from the model feature matrix because it may create target leakage or an unrealistically optimistic evaluation. Variables such as turnover_reason and risk_factors_summary are also treated as unsuitable predictors where they may encode downstream outcomes or target-related information.
+
+3. Feature engineering and preprocessing
+The workflow creates skill-count features and separates numerical and categorical predictors. The intended preprocessing pipeline uses:
+- Median imputation for numerical features
+- Most-frequent imputation for categorical features
+- One-hot encoding for categorical variables, with unknown categories ignored
+The intended train-validation split is 80:20, using random_state=42. Preprocessing should be fitted on the training data only, preferably within a scikit-learn pipeline, to prevent information from the validation data influencing the fitted transformations.
+
+4. Model development
+The notebook evaluates the following regression algorithms:
+- Linear Regression
+- Random Forest Regressor
+- XGBoost Regressor
+- Stacking Regressor
+The initial models provide a performance baseline. A Stacking Regressor is also evaluated using the selected base estimators.
+
+5. Hyperparameter optimization
+Optuna is used to tune the XGBoost model. The reported workflow uses a 50,000-row training subsample for optimization and a time limit of approximately 120 seconds. The selected hyperparameters are then used to fit the tuned model on the full training split.
+
+The number of completed trials and the best parameter configuration may vary depending on the runtime environment and available computing resources.
+
+6. Model evaluation
+Model performance is assessed using:
+- Mean Absolute Error (MAE): the average absolute difference between actual and predicted values. Lower values indicate smaller average errors.
+- Root Mean Squared Error (RMSE): the square root of the average squared prediction error. Lower values indicate better performance, with larger errors penalized more heavily.
+- Coefficient of determination (R²): the proportion of target variance explained by the model. Higher values generally indicate a better fit.
+The following results are reported in the supplied notebook and should be reproduced from a clean run before final submission.
+Model	MAE	RMSE	R²
+Linear Regression	0.1240	0.1520	0.7710
+Random Forest	0.1210	0.1490	0.7790
+Initial XGBoost	0.0170	0.0250	0.9940
+Tuned XGBoost	0.0131	0.0195	0.9962
+Stacking Regressor	0.0190	0.0290	0.9916
+
+
+Based on the reported validation metrics, tuned XGBoost was the best-performing model among those compared. The very high reported R² should be investigated carefully for possible synthetic data-generation patterns, leakage, duplicated records, or predictors that closely encode the target.
+
+7. Prediction and risk-band interpretation
+
+The notebook clips predicted values to the target range of 0 to 1 and groups them into project-defined bands:
+Predicted burnout score	Project risk band
+0.00–0.25	Low
+Above 0.25–0.50	Moderate
+Above 0.50–0.75	High
+Above 0.75–1.00	Critical
+
+
+These thresholds are operational categories selected for this project. They are not validated clinical thresholds or universally accepted organizational standards.
+
+8. Explainable AI using SHAP
+SHAP (SHapley Additive exPlanations) is used to examine how input features contribute to the model's predictions. The notebook uses a TreeExplainer for the tree-based model and includes global feature-importance and local explanation visualizations.
+
+SHAP values describe how the fitted model uses features to produce predictions. They do not demonstrate that a feature causes burnout or that changing it will change actual employee outcomes.
+
+9. Counterfactual analysis using DiCE
+DiCE (Diverse Counterfactual Explanations) is used to generate alternative feature combinations for selected high-prediction records. The stated objective is to explore whether plausible changes to selected input features can produce a lower model-predicted burnout score, with an example target of 0.45 or below.
+
+Counterfactual examples are hypothetical model outputs. Their feasibility, fairness, and practical implications must be reviewed before they are considered as possible workplace actions.
+Key reported findings
+- The notebook reports a very strong association between stress_level and the burnout target; this feature is excluded from model training due to potential target leakage.
+- Tuned XGBoost achieves the strongest reported validation metrics among the evaluated models.
+- The notebook applies SHAP to investigate influential features and individual predictions.
+- DiCE is used to explore alternative feature combinations associated with lower predicted scores.
+- The notebook reports scoring approximately 170,000 records, with a mean predicted score of 0.733 and 58.9% classified in the critical band. These figures should be checked against the exact dataset and prediction population used in the final run.
+Repository structure
+A suggested repository structure is:
+employee-burnout-prediction/
 ├── README.md
-│
-└── requirements.txt
-```
+├── employee_burnout.json
+└── employee_burnout_prediction.ipynb
+The notebook searches for common dataset filenames, including:
+- employee_burnout.json
+- dataset.json
+- burnout_data.json
+- employee_burnout_rate_prediction.json
+Update the notebook's file paths if your dataset uses a different name or directory.
+Installation and setup
+Requirements
+- Python 3.9 or a compatible version supported by the libraries
+- Jupyter Notebook or JupyterLab
+- Sufficient memory and processing capacity for a large dataset
+Create a virtual environment
+python -m venv .venv
 
----
+# macOS/Linux
+source .venv/bin/activate
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+Install dependencies
+pip install pandas numpy matplotlib seaborn scikit-learn xgboost optuna dice-ml shap jupyter
+For a formal project handover, record the exact Python and package versions used in the final experiment, ideally in a requirements.txt file.
+Running the project
+1. Clone or download the project repository.
+2. Place the JSON dataset in the project directory or update the dataset path in the notebook.
+3. Create and activate the Python environment.
+4. Install the dependencies listed above.
+5. Launch Jupyter Notebook or JupyterLab.
+6. Open employee_burnout_prediction.ipynb.
+7. Verify the dataset path, target column, and feature lists.
+8. Run the notebook from top to bottom.
+9. Review the evaluation metrics, visualizations, SHAP explanations, and DiCE counterfactual examples.
+Implementation and reproducibility notes
+The supplied notebook contains implementation details that should be checked before final capstone submission:
+1. Feature-list consistency: satisfaction_score appears in numerical, SHAP, and DiCE feature lists but is also included in drop_cols. Decide whether it belongs in the modelling dataset and update all related lists consistently.
+2. Preprocessor columns: Confirm that every column in the numerical and categorical feature lists exists in the feature matrix and that there are no unintended duplicates.
+3. Stacking inputs: The stacking section refers to X_tr_enc and X_val_enc. Confirm these variables are created from a preprocessor fitted on training data and that their rows align with the corresponding target values.
+4. Dataframe naming: A categorical plotting section refers to df, while the main dataframe is named employee. Confirm that df is defined or use the correct dataframe name.
+5. Metric consistency: The residual-analysis section reports metrics that differ from the tuned-model comparison. Recalculate metrics using the same validation target and prediction array, then report one consistent set of results.
+6. Prediction population: The prediction code uses X_test if available and otherwise falls back to X_val. Clearly document which records are scored. Validation data should not be described as an independent test set.
+7. SHAP feature mapping: Verify that encoded feature names are grouped correctly when interpreting one-hot encoded categorical variables.
+8. DiCE constraints: Check that permitted feature ranges and generated counterfactuals are realistic and internally consistent.
+Limitations and ethical considerations
+- The dataset appears to contain generated or synthetic patterns. Its findings may not generalize to actual employees or organizations.
+- A high validation score does not by itself establish that a model will perform well on unseen real-world data.
+- Potential target leakage, duplicated records, synthetic data-generation rules, and distribution shift should be investigated.
+- An independent test set or external dataset should be used for final performance assessment.
+- Model performance and prediction errors should be examined across relevant employee groups before any operational use.
+- SHAP feature contributions are explanations of model behaviour, not evidence of causation.
+- DiCE counterfactuals are hypothetical scenarios, not guaranteed interventions or predictions of actual outcomes.
+- Individual employee predictions are sensitive. Access should be restricted and applicable privacy and employment requirements followed.
+- Predictions should never be used as the sole basis for hiring, promotion, discipline, termination, or other consequential employment decisions.
+Future work
+- Validate the model on an independent dataset from a real-world setting, where ethically and legally appropriate.
+- Establish a fully reproducible training and evaluation pipeline.
+- Conduct cross-validation and subgroup performance analysis.
+- Investigate possible target leakage and synthetic data-generation artefacts.
+- Improve the documentation of data provenance, feature definitions, and modelling decisions.
+- Save the fitted preprocessing and modelling pipeline and document it with a model card.
+- Consult relevant subject-matter experts before considering any workplace intervention suggested by model explanations.
 
 # Conclusion
+This capstone project demonstrates an end-to-end application of data analytics, machine learning, and explainable AI to employee burnout-rate prediction. It compares regression models, applies hyperparameter optimization, and uses SHAP and DiCE to examine model behaviour and hypothetical alternatives. The reported results provide a basis for further investigation, but independent validation and careful consideration of data limitations are necessary before drawing conclusions about real-world employees.
 
-This project successfully developed a machine learning solution for predicting employee burnout rates using People Analytics and HR metrics. Through data cleaning, feature engineering, exploratory data analysis, and predictive modeling, the study identified Mental Fatigue Score and Resource Allocation as the strongest drivers of burnout.
+# Repository structure
+A suggested repository structure is:
+employee-burnout-prediction/
+├── README.md
+├── employee_burnout.json
+└── employee_burnout_prediction.ipynb
 
-Among the models evaluated, XGBoost provided the best performance due to its ability to capture complex relationships within the data. The resulting model can help organizations proactively identify employees at risk of burnout, improve workforce planning, support employee well-being initiatives, and enable data-driven HR decision-making.
+Author:Grace Obonyo
 
-By leveraging predictive analytics, organizations can create healthier work environments, improve employee satisfaction, and enhance overall organizational productivity.
-
-
+License and data availability
+Add the applicable software license and dataset attribution or access conditions before publishing the repository. Do not redistribute employee data unless you have permission and an appropriate legal basis.
